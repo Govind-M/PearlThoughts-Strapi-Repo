@@ -1,0 +1,34 @@
+name: CD - Deploy via Terraform
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Initialize Terraform
+        run: terraform init
+        working-directory: ./IAC
+
+      - name: Plan Terraform changes
+        run: terraform plan
+        working-directory: ./IAC
+
+      - name: Apply Terraform
+        run: terraform apply -auto-approve
+        working-directory: ./IAC
