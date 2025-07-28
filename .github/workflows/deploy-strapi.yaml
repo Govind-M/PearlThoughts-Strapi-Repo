@@ -62,6 +62,8 @@ jobs:
 
       - name: Register Task Definition & Update ECS Service
         run: |
+          set -x  
+
           TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_NAME --region $AWS_REGION)
           NEW_IMAGE="$ECR_URI:latest"
 
@@ -77,11 +79,14 @@ jobs:
                memory: .memory}')
 
           echo "$NEW_TASK_DEF" > new-task-def.json
+          cat new-task-def.json 
 
           NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
             --region $AWS_REGION \
             --cli-input-json file://new-task-def.json \
             | jq -r '.taskDefinition.taskDefinitionArn')
+
+          echo "New Task Definition ARN: $NEW_TASK_DEF_ARN"
 
 
           aws ecs update-service \
