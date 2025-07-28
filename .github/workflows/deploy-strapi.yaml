@@ -67,6 +67,10 @@ jobs:
           TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_NAME --region $AWS_REGION)
           NEW_IMAGE="$ECR_URI:latest"
 
+          echo "TASK_ROLE_ARN: $TASK_ROLE_ARN"
+          echo "TASK_DEFINITION: $TASK_DEFINITION"
+
+
           NEW_TASK_DEF=$(echo $TASK_DEFINITION | \
             jq --arg IMAGE "$NEW_IMAGE" \
                --arg TASK_ROLE_ARN "${TASK_ROLE_ARN:-arn:aws:iam::607700977843:role/ecs-task-execution-role-gov}" \
@@ -74,7 +78,7 @@ jobs:
               {family: .family,
                containerDefinitions: (.containerDefinitions | map(.image = $IMAGE)),
                executionRoleArn: .executionRoleArn,
-               taskRoleArn: .taskRoleArn,
+               taskRoleArn: $TASK_ROLE_ARN,
                networkMode: .networkMode,
                requiresCompatibilities: .requiresCompatibilities,
                cpu: .cpu,
