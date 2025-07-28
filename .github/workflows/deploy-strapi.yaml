@@ -108,5 +108,5 @@ jobs:
         with:
           name: terraform-state
           path: |
-            terraform.tfstate
-            terraform.tfstate.backup
+            ./IAC-Task7/terraform.tfstate
+            ./IAC-Task7/terraform.tfstate.backup
