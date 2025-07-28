@@ -18,6 +18,10 @@ jobs:
       TASK_DEFINITION_NAME: strapi-task-definition-gov
 
     steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
