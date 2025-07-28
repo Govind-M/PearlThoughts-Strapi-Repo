@@ -80,3 +80,13 @@ jobs:
             --service $SERVICE_NAME \
             --task-definition "$NEW_TASK_DEF_ARN" \
             --region $AWS_REGION
+
+
+      - name:  Upload Terraform state
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: |
+            terraform.tfstate
+            terraform.tfstate.backup
