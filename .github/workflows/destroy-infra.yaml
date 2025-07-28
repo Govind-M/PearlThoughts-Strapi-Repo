@@ -24,7 +24,7 @@ jobs:
       - name: 📥 Download latest terraform-state artifact
         uses: dawidd6/action-download-artifact@v3
         with:
-          workflow: deploy-strapi.yml  # Match the filename of the deploy workflow
+          workflow: deploy-strapi.yaml  # Match the filename of the deploy workflow
           name: terraform-state
           path: .
 
