@@ -73,6 +73,7 @@ jobs:
               {family: .family,
                containerDefinitions: (.containerDefinitions | map(.image = $IMAGE)),
                executionRoleArn: .executionRoleArn,
+               taskRoleArn: .taskRoleArn
                networkMode: .networkMode,
                requiresCompatibilities: .requiresCompatibilities,
                cpu: .cpu,
