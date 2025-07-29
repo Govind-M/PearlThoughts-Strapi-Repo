@@ -54,38 +54,39 @@ resource "aws_lb_listener" "http" {
 
 
 
-resource "aws_security_group" "strapi_sg"{
-    vpc_id = data.aws_vpc.default.id
+# resource "aws_security_group" "strapi_sg"{
+#   name        = "strapi-app-sg-gov"
+#     vpc_id = data.aws_vpc.default.id
 
-    ingress {
-        from_port = 1337
-        to_port = 1337
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
+#     ingress {
+#         from_port = 1337
+#         to_port = 1337
+#         protocol = "tcp"
+#         cidr_blocks = ["0.0.0.0/0"]
+#     }
 
-    ingress {
-        from_port = 80
-        to_port = 80
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
+#     ingress {
+#         from_port = 80
+#         to_port = 80
+#         protocol = "tcp"
+#         cidr_blocks = ["0.0.0.0/0"]
+#     }
 
-    ingress {
-        from_port = 22
-        to_port = 22
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
+#     ingress {
+#         from_port = 22
+#         to_port = 22
+#         protocol = "tcp"
+#         cidr_blocks = ["0.0.0.0/0"]
+#     }
 
     
-    egress {
-        from_port = 0
-        to_port = 0
-        protocol = "-1"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-}
+#     egress {
+#         from_port = 0
+#         to_port = 0
+#         protocol = "-1"
+#         cidr_blocks = ["0.0.0.0/0"]
+#     }
+# }
 
 resource "aws_security_group" "alb_sg" {
   name        = "strapi-alb-sg-gov"
