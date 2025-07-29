@@ -1,3 +1,4 @@
+# Workflow to destroy the infra created
 name: Destroy Strapi Infrastructure
 
 on:
