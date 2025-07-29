@@ -42,3 +42,4 @@ jobs:
 
       - name: Destroy Infrastructure
         run: terraform destroy -auto-approve
+        working-directory: ./IAC-Task7
