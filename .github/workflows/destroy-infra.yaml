@@ -40,8 +40,5 @@ jobs:
         run: terraform init
         working-directory: ./IAC-Task7
 
-      - name: List .terraform directory contents
-        run: ls -la .terraform
-
       - name: Destroy Infrastructure
         run: terraform destroy -auto-approve
