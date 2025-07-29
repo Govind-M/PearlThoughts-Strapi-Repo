@@ -22,12 +22,19 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
       - name: 📥 Download latest terraform-state artifact
         uses: dawidd6/action-download-artifact@v3
         with:
           workflow: deploy-strapi.yaml  # Match the filename of the deploy workflow
           name: terraform-state
           path: .
+
+
 
       - name: Terraform Init
         run: terraform init
