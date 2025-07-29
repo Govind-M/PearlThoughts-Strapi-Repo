@@ -1,4 +1,4 @@
-# Workflow to deploy the infra for hosting strapi app
+# Workflow to deploy the infrastructure for hosting strapi app
 
 name: Deploy to AWS
 
