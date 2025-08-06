@@ -98,16 +98,16 @@ jobs:
       - name: Trigger CodeDeploy Deployment
         id: codedeploy
         run: |
-            CONTENT=$(jq -c . appspec.json)
-            DEPLOYMENT_ID=$(aws deploy create-deployment \
-            --application-name $CODEDEPLOY_APP \
-            --deployment-group-name $CODEDEPLOY_DG \
-            --deployment-config-name CodeDeployDefault.ECSCanary10Percent5Minutes \
-            --revision "revisionType=AppSpecContent,appSpecContent={content=$CONTENT}" \
-            --description "Deploy commit $GITHUB_SHA" \
-            --query "deploymentId" --output text)
+                CONTENT=$(jq -c . appspec.json | sed 's/"/\\"/g')  
+                DEPLOYMENT_ID=$(aws deploy create-deployment \
+                --application-name "$CODEDEPLOY_APP" \
+                --deployment-group-name "$CODEDEPLOY_DG" \
+                --deployment-config-name CodeDeployDefault.ECSCanary10Percent5Minutes \
+                --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":\"$CONTENT\"}}" \
+                --description "Deploy commit $GITHUB_SHA" \
+                --query "deploymentId" --output text)
 
-            echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
+                echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
 
       - name: Wait for CodeDeploy Deployment to Complete
         run: |
