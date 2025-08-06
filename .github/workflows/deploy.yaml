@@ -1,0 +1,119 @@
+name: Deploy to Amazon ECS via CodeDeploy
+
+on:
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: strapi-repo-gov
+  ECS_CLUSTER: strapi-cluster-gov
+  ECS_SERVICE: strapi-service-gov
+  TASK_DEFINITION: strapi-task-definition-gov
+  CONTAINER_NAME: strapi-gov
+  CODEDEPLOY_APP: strapi-codedeploy-gov
+  CODEDEPLOY_DG: strapi-dg-gov
+
+jobs:
+  deploy:
+    name: Deploy to ECS via CodeDeploy
+    runs-on: ubuntu-latest
+
+    # permissions:
+    #   id-token: write
+    #   contents: read
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Optional: Build Docker image if not pre-built
+      - name: Build Docker image
+        run: docker build -t strapi:latest .
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Tag and Push Docker Image to ECR
+        run: |
+          IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}"
+          docker tag strapi:latest $IMAGE_URI
+          docker push $IMAGE_URI
+        env:
+          DOCKER_BUILDKIT: 1
+
+      - name: Download current ECS Task Definition
+        id: task-def
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.TASK_DEFINITION }} \
+            --query 'taskDefinition' > task-def.json
+
+      - name: Update Task Definition with new image
+        id: new-task-def
+        run: |
+          IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}"
+          jq --arg IMAGE "$IMAGE_URI" \
+             --arg CONTAINER_NAME "${{ env.CONTAINER_NAME }}" \
+             '(.containerDefinitions[] | select(.name == $CONTAINER_NAME) | .image) |= $IMAGE |
+              del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' \
+             task-def.json > new-task-def.json
+
+          NEW_REVISION_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://new-task-def.json \
+            --query "taskDefinition.taskDefinitionArn" \
+            --output text)
+
+          echo "NEW_TASK_DEF_ARN=$NEW_REVISION_ARN" >> $GITHUB_ENV
+
+      - name: Prepare AppSpec for CodeDeploy
+        run: |
+          cat > appspec.json <<EOF
+          {
+            "version": 1,
+            "Resources": [
+              {
+                "TargetService": {
+                  "Type": "AWS::ECS::Service",
+                  "Properties": {
+                    "TaskDefinition": "${NEW_TASK_DEF_ARN}",
+                    "LoadBalancerInfo": {
+                      "ContainerName": "${{ env.CONTAINER_NAME }}",
+                      "ContainerPort": 1337
+                    }
+                  }
+                }
+              }
+            ]
+          }
+          EOF
+
+      - name: Trigger CodeDeploy Deployment
+        id: codedeploy
+        run: |
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
+            --application-name ${{ env.CODEDEPLOY_APP }} \
+            --deployment-group-name ${{ env.CODEDEPLOY_DG }} \
+            --revision file://appspec.json \
+            --deployment-config-name CodeDeployDefault.ECSAllAtOnce \
+            --description "Deploy commit ${{ github.sha }}" \
+            --query "deploymentId" --output text)
+
+          echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
+
+      - name: Wait for CodeDeploy Deployment to Complete
+        run: |
+          aws deploy wait deployment-successful \
+            --deployment-id $DEPLOYMENT_ID
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Deployment failed. Manual rollback may be required or re-trigger with previous task definition."
